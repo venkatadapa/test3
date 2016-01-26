@@ -1,0 +1,164 @@
+<?php
+
+/**
+ * @file 
+ * Handling db schemas for voting app.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function civiq_ballots_schema() {
+  $schema = array();
+  
+  $schema['cb_questions'] = array(
+    'description' => 'The base table for the ballots entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key of the ballots entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Key of the author entity',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'question' => array(
+        'description' => 'Question',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'description' => array(
+        'description' => 'Description',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'created' => array(
+        'description' => 'The unix timestamp of the entity creation time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The unix timestamp of the entity changed time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'The status of the entity',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => NODE_PUBLISHED,
+      ),
+    ),
+    'primary key' => array('id'),  
+  ); 
+  
+  $schema['cb_options'] = array(
+    'description' => 'The base table for the ballots options entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key of the ballots options entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Key of the author entity',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cb_option' => array(
+        'description' => 'Option',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,        
+      ),
+      'cb_question_id' => array(
+        'description' => 'Question ID',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The unix timestamp of the entity creation time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The unix timestamp of the entity changed time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'The status of the entity',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => NODE_PUBLISHED,
+      ),
+    ),
+    'primary key' => array('id'),      
+  );
+  
+  $schema['cb_votes'] = array(
+    'description' => 'The base table for the ballot votes entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key of the ballot votes entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'Key of the author entity',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'votes' => array(
+        'description' => 'vote',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),     
+      'created' => array(
+        'description' => 'The unix timestamp of the entity creation time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The unix timestamp of the entity changed time',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'The status of the entity',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => NODE_PUBLISHED,
+      ),
+    ),
+    'primary key' => array('id'),    
+  );
+  
+  return $schema;    
+}

@@ -1,0 +1,6 @@
+name = Decision Maker Voting App
+description = Decision Maker Voting App
+core = 7.x
+version = 7.x.0
+dependencies[] = entity
+files[] = includes/entity.controller.inc

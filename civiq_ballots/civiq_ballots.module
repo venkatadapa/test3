@@ -1,0 +1,288 @@
+<?php
+
+/**
+ * @file
+ * Decision Making voting app entities related code.
+ */
+ 
+/**
+ * Defining Constants. 
+ */
+ define ('CB_QUESTIONS_ADMIN_PATH', 'admin/ballots/questions');
+ define ('CB_QUESTIONS_VIEW_PATH', 'ballots-question');
+ define ('CB_OPTIONS_ADMIN_PATH', 'admin/ballots/options');
+ define ('CB_OPTIONS_VIEW_PATH', 'ballots-option');
+ define ('CB_VOTES_ADMIN_PATH', 'admin/ballots/votes');
+ define ('CB_VOTES_VIEW_PATH', 'ballots-vote');
+  
+/**
+ * Implements hook_entity_info().
+ */
+function civiq_ballots_entity_info() {  
+  $info = array();  
+  $info['cb_questions'] = array(
+    'label' => t('Ballot Question'),
+    'base table' => 'cb_questions',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'question', //This field value displayed as label like node title in content list page
+    ),
+    'entity class' => 'CbQuestionsEntity',
+    'controller class' => 'CbQuestionsEntityAPIController',
+    'access callback' => 'access_cb_questions',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => CB_QUESTIONS_ADMIN_PATH,
+      'controller class' => 'CbQuestionsEntityDefaultUIController',
+      'file' => 'includes/entity.admin.inc',     
+    ),
+    'fieldable' => TRUE,    
+    /*'inline entity form' => array(
+        'controller' => 'ProjectInlineEntityFormController',
+    ),*/
+    'views controller class' => 'EntityDefaultViewsController',
+    'module' => 'civiq_ballots',
+  );
+  
+  $info['cb_options'] = array(
+    'label' => t('Ballot Option'),
+    'base table' => 'cb_options',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'cb_option',
+    ),
+    'entity class' => 'CbOptionsEntity',
+    'controller class' => 'CbOptionsEntityApiController',
+    'access callback' => 'access_cb_options',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => CB_OPTIONS_ADMIN_PATH,
+      'controller class' => 'CbQuestionsEntityDefaultUIController',
+      'file' => 'includes/entity.admin.inc',
+    ),        
+    'views controller class' => 'EntityDefaultViewsController',
+    'module' => 'civiq_ballots',
+  );
+  
+  $info['cb_votes'] = array(
+    'label' => t('Ballot Vote'),
+    'base table' => 'cb_votes',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'vote',
+    ),
+    'entity class' => 'CbVotesEntity',
+    'controller class' => 'CbVotesEntityApiController',
+    'access callback' => 'access_cb_votes',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => CB_VOTES_ADMIN_PATH,
+      'controller class' => 'CbVotesEntityDefaultUIController',
+      'file' => 'includes/entity.admin.inc',
+    ),    
+    'views controller class' => 'EntityDefaultViewsController',
+    'module' => 'civiq_ballots',
+  );
+  
+  return $info;
+}
+
+/**
+ * Access call back for questions
+ */
+function access_cb_questions() {
+  return TRUE;	
+}
+
+/**
+ * Access call back for options
+ */
+function access_cb_options() {
+  return TRUE;	
+}
+
+/**
+ * Access call back for votes
+ */
+function access_cb_votes() {
+  return TRUE;	
+}
+
+/**
+ * Implements hook_menu().
+ **/
+function civiq_ballots_menu() {
+  $items = array();
+  $items['questions'] = array(
+    'title' => 'Questions',
+    'description' => 'Page with a sortable table',
+    'page callback' => 'cb_questions',    
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['vote'] = array(
+    'title' => 'Decision Maker Vote',
+    'description' => 'Decision Maker Vote',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cb_options_vote', 1),
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of questions page callback.
+ * @return array
+ * A render array set for theming by theme_table().
+ */
+function cb_questions() {
+  // We are going to output the results in a table with a nice header.
+  $header = array(
+    // The header gives the table the information it needs in order to make
+    // the query calls for ordering. TableSort uses the field information
+    // to know what database column to sort by.
+    array('data' => t('Question'), 'field' => 'q.question'),
+    array('data' => t('Description')),
+    array('data' => t('Created'), 'field' => 'q.created'),
+    array('data' => t('Updated'), 'field' => 'q.changed'),
+    array('data' => t('Actions')),
+  );
+
+  // Using the TableSort Extender is what tells the the query object that we
+  // are sorting.
+  $query = db_select('cb_questions', 'q')
+    ->extend('PagerDefault')
+    ->extend('TableSort');
+  $query->fields('q');
+
+  // Don't forget to tell the query object how to find the header information.
+  $result = $query
+    ->limit(20)
+    ->orderByHeader($header)
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $content = array(      
+      'question' => $row->question,
+      'description' => $row->description,
+      'created' => date('d/m/Y h:m:s', $row->created),
+      'changed' => date('d/m/Y h:m:s', $row->changed),
+      'actions' => l(t('Vote') , 'vote/' . $row->id,
+        array('query' => drupal_get_destination())),
+    );
+    // Normally we would add some nice formatting to our rows
+    // but for our purpose we are simply going to add our row
+    // to the array.
+    $rows[] = array('data' => $content);
+  }
+
+  // Build the table for the nice output.
+  $build['tablesort_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('There is no data exists in db'),
+  );
+
+  // Attach the pager theme.
+  $build['pager_pager'] = array('#theme' => 'pager');
+
+  return $build;
+}
+
+/**
+ * Implementation of page callback for vote. 
+ */
+function cb_options_vote($form, &$form_state, $question_id) {
+  $form = array();  
+  $question = db_select('cb_questions', 'q')
+    ->fields('q', array('question', 'description'))
+    ->condition('id', $question_id, '=')
+    ->execute()
+    ->fetchAssoc();
+  //dsm($question); 
+  $form['question'] = array(    
+    '#markup' => '<div class="row"><div class="col-md-12">'.
+      $question['question'].'</div></div>',
+  );
+  $form['description'] = array(    
+    '#markup' => '<div class="row"><div class="col-md-12">'.
+      $question['description'].'</div></div>',
+  ); 
+  $vote_preferences = array('' => t('Select'));
+  $options = array();
+  $options_query = db_select('cb_options', 'o')
+    ->fields('o', array('id', 'cb_option'))
+    ->condition('cb_question_id', $question_id, '=')
+    ->execute();
+  $total_options = $options_query->rowCount();    
+  for($i = 1; $i <= $total_options; $i++) {
+    $vote_preferences[$i] = $i;
+  }
+  $form['options'] = array(
+    '#type' => 'container',    
+    '#tree' => TRUE,
+    '#prefix' => '<div id="options-container">',
+    '#suffix' => '</div>',
+  );      
+  while($record = $options_query->fetchAssoc()) {      
+    $form['options'][$record['id']] = array(
+      '#type' => 'select',
+      '#options' => $vote_preferences,
+      '#title' => $record['cb_option']
+    );    
+  }  
+  
+  $form['actions'] = array(
+    '#type' => 'submit',
+    '#value' => t('Vote')
+  );
+  
+  return $form;     
+} 
+
+/**
+ * Form validation 
+ **/
+function cb_options_vote_validate($form, &$form_state) {
+  $option_preferences = $form_state['values']['options'];
+  $casted_votes = array();
+  foreach($option_preferences as $key => $preference) {
+    if (!empty($preference)) {
+      $casted_votes[$key] = $preference;      
+    }
+  }
+  // Show error if same preference given for multiple options
+  if(count(array_unique($casted_votes)) < count($casted_votes)) {
+    form_set_error('options', t('Invalid voting found, Please remove duplicates'));
+  }
+  
+  if (count($casted_votes) == 0) {
+    form_set_error('optios', t('Please cast votes before submit')); 
+  }
+}
+
+function cb_options_vote_submit($form, $form_state) {
+  global $user;
+  $option_preferences = $form_state['values']['options'];
+  $casted_votes = array();
+  foreach($option_preferences as $key => $preference) {
+    if (!empty($preference)) {
+      $casted_votes[$key] = $preference;      
+    }
+  }
+  if (count($casted_votes) > 0) {  
+	  $votes = drupal_json_encode($casted_votes);
+	  db_insert('cb_votes')
+		->fields(array(
+		'uid' => $user->uid,
+		'votes' => $votes,
+		'created' => REQUEST_TIME,
+	  ))
+	  ->execute();
+	  drupal_set_message(t('Thanks for voting'));
+  }
+  $form_state['redirect'] = 'questions';
+}
