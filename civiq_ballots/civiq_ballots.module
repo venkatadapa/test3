@@ -91,21 +91,36 @@ function civiq_ballots_entity_info() {
  * Access call back for questions
  */
 function access_cb_questions() {
-  return TRUE;	
+  global $user;
+  if (in_array('administrator', $user->roles)) {
+    return TRUE;	
+  }
+  
+  return FALSE;
 }
 
 /**
  * Access call back for options
  */
 function access_cb_options() {
-  return TRUE;	
+  global $user;
+  if (in_array('administrator', $user->roles)) {
+    return TRUE;	
+  }
+  
+  return FALSE;	
 }
 
 /**
  * Access call back for votes
  */
 function access_cb_votes() {
-  return TRUE;	
+  global $user;
+  if (in_array('administrator', $user->roles)) {
+    return TRUE;	
+  }
+  
+  return FALSE;	
 }
 
 /**
@@ -116,173 +131,87 @@ function civiq_ballots_menu() {
   $items['questions'] = array(
     'title' => 'Questions',
     'description' => 'Page with a sortable table',
-    'page callback' => 'cb_questions',    
+    'page callback' => 'cb_questions_page',    
     'access callback' => 'user_is_logged_in',
     'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/questions.pages.inc',
   );
   $items['vote'] = array(
     'title' => 'Decision Maker Vote',
     'description' => 'Decision Maker Vote',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('cb_options_vote', 1),
+    'page arguments' => array('cb_options_vote_form', 1),
     'access callback' => 'user_is_logged_in',
     'type' => MENU_CALLBACK,
+    'file' => 'includes/vote.pages.inc',
   );
+  $items['vote-audit'] = array(
+    'title' => 'Decision Maker Vote Audit',
+    'description' => 'Decision Maker Vote Audit',
+    'page callback' => 'cb_options_vote_audit_page',
+    'page arguments' => array(1),
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/audit.pages.inc',
+  );
+  $items['vote-results'] = array(
+    'title' => 'Decision Maker Vote Results',
+    'description' => 'Decision Maker Vote Results',
+    'page callback' => 'cb_options_vote_results_page',
+    'page arguments' => array(1),
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/results.pages.inc',
+  );
+  
   return $items;
 }
 
 /**
- * Implementation of questions page callback.
- * @return array
- * A render array set for theming by theme_table().
+ * Helper function for getting question info   
  */
-function cb_questions() {
-  // We are going to output the results in a table with a nice header.
-  $header = array(
-    // The header gives the table the information it needs in order to make
-    // the query calls for ordering. TableSort uses the field information
-    // to know what database column to sort by.
-    array('data' => t('Question'), 'field' => 'q.question'),
-    array('data' => t('Description')),
-    array('data' => t('Created'), 'field' => 'q.created'),
-    array('data' => t('Updated'), 'field' => 'q.changed'),
-    array('data' => t('Actions')),
-  );
-
-  // Using the TableSort Extender is what tells the the query object that we
-  // are sorting.
-  $query = db_select('cb_questions', 'q')
-    ->extend('PagerDefault')
-    ->extend('TableSort');
-  $query->fields('q');
-
-  // Don't forget to tell the query object how to find the header information.
-  $result = $query
-    ->limit(20)
-    ->orderByHeader($header)
-    ->execute();
-
-  $rows = array();
-  foreach ($result as $row) {
-    $content = array(      
-      'question' => $row->question,
-      'description' => $row->description,
-      'created' => date('d/m/Y h:m:s', $row->created),
-      'changed' => date('d/m/Y h:m:s', $row->changed),
-      'actions' => l(t('Vote') , 'vote/' . $row->id,
-        array('query' => drupal_get_destination())),
-    );
-    // Normally we would add some nice formatting to our rows
-    // but for our purpose we are simply going to add our row
-    // to the array.
-    $rows[] = array('data' => $content);
-  }
-
-  // Build the table for the nice output.
-  $build['tablesort_table'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-    '#empty' => t('There is no data exists in db'),
-  );
-
-  // Attach the pager theme.
-  $build['pager_pager'] = array('#theme' => 'pager');
-
-  return $build;
-}
-
-/**
- * Implementation of page callback for vote. 
- */
-function cb_options_vote($form, &$form_state, $question_id) {
-  $form = array();  
+function cb_get_question_info($id) {
   $question = db_select('cb_questions', 'q')
     ->fields('q', array('question', 'description'))
-    ->condition('id', $question_id, '=')
+    ->condition('id', $id, '=')
     ->execute()
     ->fetchAssoc();
-  //dsm($question); 
-  $form['question'] = array(    
-    '#markup' => '<div class="row"><div class="col-md-12">'.
-      $question['question'].'</div></div>',
-  );
-  $form['description'] = array(    
-    '#markup' => '<div class="row"><div class="col-md-12">'.
-      $question['description'].'</div></div>',
-  ); 
-  $vote_preferences = array('' => t('Select'));
-  $options = array();
-  $options_query = db_select('cb_options', 'o')
-    ->fields('o', array('id', 'cb_option'))
-    ->condition('cb_question_id', $question_id, '=')
-    ->execute();
-  $total_options = $options_query->rowCount();    
-  for($i = 1; $i <= $total_options; $i++) {
-    $vote_preferences[$i] = $i;
-  }
-  $form['options'] = array(
-    '#type' => 'container',    
-    '#tree' => TRUE,
-    '#prefix' => '<div id="options-container">',
-    '#suffix' => '</div>',
-  );      
-  while($record = $options_query->fetchAssoc()) {      
-    $form['options'][$record['id']] = array(
-      '#type' => 'select',
-      '#options' => $vote_preferences,
-      '#title' => $record['cb_option']
-    );    
-  }  
-  
-  $form['actions'] = array(
-    '#type' => 'submit',
-    '#value' => t('Vote')
-  );
-  
-  return $form;     
-} 
-
-/**
- * Form validation 
- **/
-function cb_options_vote_validate($form, &$form_state) {
-  $option_preferences = $form_state['values']['options'];
-  $casted_votes = array();
-  foreach($option_preferences as $key => $preference) {
-    if (!empty($preference)) {
-      $casted_votes[$key] = $preference;      
-    }
-  }
-  // Show error if same preference given for multiple options
-  if(count(array_unique($casted_votes)) < count($casted_votes)) {
-    form_set_error('options', t('Invalid voting found, Please remove duplicates'));
-  }
-  
-  if (count($casted_votes) == 0) {
-    form_set_error('optios', t('Please cast votes before submit')); 
-  }
+    
+  return $question;
 }
 
-function cb_options_vote_submit($form, $form_state) {
-  global $user;
-  $option_preferences = $form_state['values']['options'];
-  $casted_votes = array();
-  foreach($option_preferences as $key => $preference) {
-    if (!empty($preference)) {
-      $casted_votes[$key] = $preference;      
-    }
+/**
+ * Helper function for getting options   
+ */
+function cb_get_options($question_id = NULL) {
+  $query = db_select('cb_options', 'o')
+    ->fields('o', array('id', 'cb_option'));
+  if ($question_id !== Null) {
+    $query->condition('cb_question_id', $question_id, '=');
+  }     
+  $results = $query->execute();
+  $options = array();  
+  foreach($results as $row) {
+    $options[$row->id] = $row->cb_option;    
   }
-  if (count($casted_votes) > 0) {  
-	  $votes = drupal_json_encode($casted_votes);
-	  db_insert('cb_votes')
-		->fields(array(
-		'uid' => $user->uid,
-		'votes' => $votes,
-		'created' => REQUEST_TIME,
-	  ))
-	  ->execute();
-	  drupal_set_message(t('Thanks for voting'));
+    
+  return $options;
+}
+
+/**
+ * Helper function for getting votes   
+ */
+function cb_get_votes($question_id = NULL) {
+  $query = db_select('cb_votes', 'v')
+    ->fields('v', array('id', 'votes'));
+  if ($question_id !== Null) {
+    $query->condition('cb_question_id', $question_id, '=');
+  }     
+  $results = $query->execute();
+  $votes = array();  
+  foreach($results as $row) {
+    $votes[$row->id] = drupal_json_decode($row->votes);    
   }
-  $form_state['redirect'] = 'questions';
+    
+  return $votes;
 }

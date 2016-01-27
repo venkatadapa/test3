@@ -131,13 +131,19 @@ function civiq_ballots_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'cb_question_id' => array(
+        'description' => 'Question ID',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => FALSE,
+      ),
       'votes' => array(
         'description' => 'vote',
         'type' => 'text',
         'size' => 'medium',
         'not null' => FALSE,
         'default' => NULL,
-      ),     
+      ),           
       'created' => array(
         'description' => 'The unix timestamp of the entity creation time',
         'type' => 'int',        
