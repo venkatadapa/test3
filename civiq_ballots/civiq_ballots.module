@@ -210,8 +210,90 @@ function cb_get_votes($question_id = NULL) {
   $results = $query->execute();
   $votes = array();  
   foreach($results as $row) {
-    $votes[$row->id] = drupal_json_decode($row->votes);    
+    $option_votes = drupal_json_decode($row->votes);    
+    $points = get_total_points_for_each_vote($option_votes, $question_id);    
+    $votes[$row->id] = array(
+      'votes' => $option_votes,
+      'points' => $points['points_raised'],
+      'total_points' => $points['total_points_raised'],
+      'points_unused' => $points['points_unused'],
+    );        
   }
     
   return $votes;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function civiq_ballots_theme($existing, $type, $theme, $path) {
+  $items = array();
+ 
+  $items['cb_audit_page'] = array(
+    'variables' => array('question' => NULL, 'options' => NULL, 'votes' => NULL),
+    'template' => 'templates/cb-votes'
+  );
+ 
+  return $items;
+}
+
+
+/**
+ * Function to calculate total points raised for each vote
+ */
+function get_total_points_for_each_vote($option_votes, $question_id) {  
+  // Options of the question
+  $options = cb_get_options($question_id);
+  $total_options = count($options);
+  $options_voted = count($option_votes);
+  $diff = 0;
+  $points_first_preference = 0;
+  // If all options voted
+  if ($options_voted == $total_options) {
+    $points_first_preference = $total_options;    
+  } else {
+    $diff = $total_options - $options_voted;
+  }
+
+  // If total votes less than total options  
+  if ($diff > 0) {
+    $points_first_preference = $diff;
+  }
+  
+  $points_raised = array();
+  foreach($option_votes as $option_id => $vote_preference) {
+    if ($vote_preference == 1) {
+      $points_raised[$option_id] = $points_first_preference;
+    } else {    
+      /** 
+       * Points based on preference
+       * 1st = $points_first_preference;
+       * 2nd = 1st - 1;
+       * 3rd = 1st - 2;
+       * 4th = 1st - 3;
+       */
+      $points_raised[$option_id] = $points_first_preference - ($vote_preference - 1);
+    }
+  }
+  
+  $points_first_preference_all_voted = $total_options;
+  $points_total = array();
+  $key = 0;
+  foreach($options as $option) {
+    if ($key == 0) {
+      $points_total[$key] = $points_first_preference_all_voted;
+    } else {
+      $points_total[$key] = $points_first_preference_all_voted - $key;   
+    }    
+    $key++;
+  }
+  
+  $total_points_raised = array_sum($points_raised);
+  $points_unused = array_sum($points_total) - $total_points_raised;  
+  
+  return array(  
+    'points_raised' => $points_raised,
+    'total_points_raised' => $total_points_raised,
+    'points_unused' => $points_unused 
+  );
 }
