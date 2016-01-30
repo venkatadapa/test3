@@ -44,7 +44,7 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       );
     }    
   }  
-  $default_options = 1;
+  $default_options = 3;
   if (count($existing_options) > 1) {
     $default_options = count($existing_options);
   }

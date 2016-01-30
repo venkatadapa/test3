@@ -60,6 +60,24 @@ function cb_options_vote_form_validate($form, &$form_state) {
       $casted_votes[$key] = $preference;      
     }
   }
+  sort($casted_votes); 
+  $invalid_sequence = FALSE;
+  if (isset($casted_votes[0]) and $casted_votes[0] != 1){
+    $invalid_sequence = TRUE;	  
+  }
+  
+  for($i=0; $i < count($casted_votes); $i++) {
+	  //dsm($casted_votes);
+	if (isset($casted_votes[$i+1])) {  
+      if (($casted_votes[$i+1] - $casted_votes[$i]) > 1) {
+	    $invalid_sequence = TRUE;
+	  }
+    }
+  }
+  if ($invalid_sequence) {
+    form_set_error('options', t('Invalid sequence found, Please vote in sequential order'));
+  }
+  
   // Show error if same preference given for multiple options
   if(count(array_unique($casted_votes)) < count($casted_votes)) {
     form_set_error('options', t('Invalid voting found, Please remove duplicates'));

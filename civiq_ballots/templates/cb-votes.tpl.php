@@ -23,11 +23,16 @@
   </tr>
 </thead>	
 <?php $vote_key = 1; 
-  foreach($votes as $vote) { dsm($vote); ?>
+  foreach($votes as $vote) { ?>
 	<tr>
 	  <td><?php echo $vote_key; ?></td>
 	  <?php for ($key=1; $key <= count($options); $key++) { ?>
-		<td> <?php echo $vote['votes'][$key]; ?> </td>
+		<td> <?php if (isset($vote['votes'][$key])) {
+			         echo $vote['votes'][$key]; 
+			       } else {
+			        echo '-'; 
+			       } ?> 
+        </td>
       <?php } ?>
 	  <td><?php echo $vote['total_points']; ?></td>
 	  <td><?php echo $vote['points_unused']; ?></td>

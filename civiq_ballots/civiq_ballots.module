@@ -209,9 +209,11 @@ function cb_get_votes($question_id = NULL) {
   }     
   $results = $query->execute();
   $votes = array();  
-  foreach($results as $row) {
+  $voters_profile = array();
+  foreach($results as $row) {    
     $option_votes = drupal_json_decode($row->votes);    
     $points = get_total_points_for_each_vote($option_votes, $question_id);    
+    $voters_profile[] = $option_votes; //get_voters_profile($option_votes, $question_id);
     $votes[$row->id] = array(
       'votes' => $option_votes,
       'points' => $points['points_raised'],
@@ -219,7 +221,19 @@ function cb_get_votes($question_id = NULL) {
       'points_unused' => $points['points_unused'],
     );        
   }
-    
+  
+  // Collect how many times each preference given to each option
+  $no_times_each_preference_to_each_option = array();
+  $each_preference_no_times_voted = array();
+  foreach($voters_profile as $profiles) {
+  //dsm($profiles);
+    foreach($profiles as $option_id => $preference) {      
+      $no_times_each_preference_to_each_option[$option_id][$preference][] = $preference;
+      $each_preference_no_times_voted[$preference][] = $preference;
+    }
+  }
+  //$votes['no_times_each_preference_to_each_option'] = $no_times_each_preference_to_each_option;
+  //$votes['each_preference_no_times_voted'] = $each_preference_no_times_voted;  
   return $votes;
 }
 
@@ -257,12 +271,72 @@ function get_total_points_for_each_vote($option_votes, $question_id) {
 
   // If total votes less than total options  
   if ($diff > 0) {
-    $points_first_preference = $diff;
+    $points_first_preference = $total_options - $diff;
+  }
+  
+  $points_raised = array();    
+  foreach($option_votes as $option_id => $vote_preference) {    
+    if ($vote_preference == 1) {
+      $points_raised[$option_id] = $points_first_preference;
+    } else {    
+      /** 
+       * Points based on preference
+       * 1st = $points_first_preference;
+       * 2nd = 1st - 1;
+       * 3rd = 1st - 2;
+       * 4th = 1st - 3;
+       */
+      $points_raised[$option_id] = $points_first_preference - ($vote_preference - 1);
+    }
+  }
+  
+  $points_first_preference_all_voted = $total_options;
+  $points_total = array();
+  $key = 0;
+  foreach($options as $option) {
+    if ($key == 0) {
+      $points_total[$key] = $points_first_preference_all_voted;
+    } else {
+      $points_total[$key] = $points_first_preference_all_voted - $key;   
+    }    
+    $key++;
+  }
+  
+  $total_points_raised = array_sum($points_raised);
+  $points_unused = array_sum($points_total) - $total_points_raised;  
+  return array(  
+    'points_raised' => $points_raised,
+    'total_points_raised' => $total_points_raised,
+    'points_unused' => $points_unused 
+  );
+}
+
+
+/**
+ * Function to get voters profile
+ */
+function get_voters_profile($question_id) {  
+  // Options of the question
+  $options = cb_get_options($question_id);
+  $total_options = count($options);
+  $options_voted = count($option_votes);
+  $diff = 0;
+  $points_first_preference = 0;
+  // If all options voted
+  if ($options_voted == $total_options) {
+    $points_first_preference = $total_options;    
+  } else {
+    $diff = $total_options - $options_voted;
+  }
+
+  // If total votes less than total options  
+  if ($diff > 0) {
+    $points_first_preference = $total_options - $diff;
   }
   
   $points_raised = array();
   foreach($option_votes as $option_id => $vote_preference) {
-    if ($vote_preference == 1) {
+     if ($vote_preference == 1) {
       $points_raised[$option_id] = $points_first_preference;
     } else {    
       /** 
