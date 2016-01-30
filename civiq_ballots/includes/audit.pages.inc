@@ -15,7 +15,9 @@ function cb_options_vote_audit_page($question_id) {
   $data = array(
     'question' => $question,
     'options' => $options,
-    'votes' => $votes, 
+    'votes' => $votes['votes'],
+    'no_times_each_preference_to_each_option' => $votes['no_times_each_preference_to_each_option'],
+    'each_preference_no_times_voted' => $votes['each_preference_no_times_voted'], 
   );
   
   return theme('cb_audit_page', $data);

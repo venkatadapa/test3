@@ -210,10 +210,12 @@ function cb_get_votes($question_id = NULL) {
   $results = $query->execute();
   $votes = array();  
   $voters_profile = array();
+  $social_ranking = array();
   foreach($results as $row) {    
     $option_votes = drupal_json_decode($row->votes);    
     $points = get_total_points_for_each_vote($option_votes, $question_id);    
-    $voters_profile[] = $option_votes; //get_voters_profile($option_votes, $question_id);
+    $voters_profile[] = $option_votes;
+    $social_ranking[] = $points['points_raised'];
     $votes[$row->id] = array(
       'votes' => $option_votes,
       'points' => $points['points_raised'],
@@ -222,19 +224,30 @@ function cb_get_votes($question_id = NULL) {
     );        
   }
   
+  $total_points_each_option = array();
+  foreach($social_ranking as $ranking) {
+	  foreach($ranking as $option_id => $point) {
+		  $total_points_each_option[$option_id][] = $point;
+      }	  
+  }  
   // Collect how many times each preference given to each option
   $no_times_each_preference_to_each_option = array();
   $each_preference_no_times_voted = array();
-  foreach($voters_profile as $profiles) {
-  //dsm($profiles);
+  foreach($voters_profile as $profiles) {  
     foreach($profiles as $option_id => $preference) {      
       $no_times_each_preference_to_each_option[$option_id][$preference][] = $preference;
       $each_preference_no_times_voted[$preference][] = $preference;
     }
   }
-  //$votes['no_times_each_preference_to_each_option'] = $no_times_each_preference_to_each_option;
-  //$votes['each_preference_no_times_voted'] = $each_preference_no_times_voted;  
-  return $votes;
+    
+  $data = array(
+    'votes' => $votes,
+    'no_times_each_preference_to_each_option' => $no_times_each_preference_to_each_option,
+    'each_preference_no_times_voted'=> $each_preference_no_times_voted,
+    'each_preference_no_times_voted' => $total_points_each_option,     
+  );  
+  
+  return $data;
 }
 
 /**
@@ -244,7 +257,13 @@ function civiq_ballots_theme($existing, $type, $theme, $path) {
   $items = array();
  
   $items['cb_audit_page'] = array(
-    'variables' => array('question' => NULL, 'options' => NULL, 'votes' => NULL),
+    'variables' => array(
+      'question' => NULL, 
+      'options' => NULL, 
+      'votes' => NULL,
+      'no_times_each_preference_to_each_option' => NULL,
+      'each_preference_no_times_voted' => Null,
+    ),
     'template' => 'templates/cb-votes'
   );
  

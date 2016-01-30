@@ -22,7 +22,9 @@
     <?php } ?>
   </tr>
 </thead>	
-<?php $vote_key = 1; 
+<?php $vote_key = 1;
+  $total_points = 0;
+  $total_unused_points = 0; 
   foreach($votes as $vote) { ?>
 	<tr>
 	  <td><?php echo $vote_key; ?></td>
@@ -34,11 +36,20 @@
 			       } ?> 
         </td>
       <?php } ?>
-	  <td><?php echo $vote['total_points']; ?></td>
-	  <td><?php echo $vote['points_unused']; ?></td>
+	  <td><?php echo $vote['total_points']; 
+	    $total_points += $vote['total_points'];    
+	  ?></td>
+	  <td><?php echo $vote['points_unused']; 
+	    $total_unused_points += $vote['points_unused'];
+	  ?></td>
 	</tr>
 <?php $vote_key++;
   } ?>
+  
+ <tr><td colspan="<?php echo count($options)+1;?>"><?php echo t('Total');?></td>
+   <td><?php echo $total_points; ?></td>
+   <td><?php echo $total_unused_points; ?></td>
+   </tr> 
 </table>
 
 
@@ -57,13 +68,47 @@
     <?php } ?>
   </tr>
 </thead>	
-<?php 
-  foreach($options as $option) { 
-	
-  }
-?>
+<?php
+ $preference = 1;
+ foreach($options as $option_id => $option) { ?>
+  <tr>
+    <td><?php echo $preference; ?></td>
+    <?php foreach($options as $option_id_inner => $option_inner) { ?>
+      <td><?php
+        if (isset($no_times_each_preference_to_each_option[$option_id_inner][$preference])) { 
+          echo count($no_times_each_preference_to_each_option[$option_id_inner][$preference]);
+	    } else {
+		  echo '-';	
+	    } 
+        ?>
+      </td>      
+    <?php } ?>
+  <td><?php echo count($each_preference_no_times_voted[$preference]); ?></td>        
+  </tr>	
+<?php $preference++; } ?>
 </table>
 
 
 <!--Ranking based on preferences choosen-->
 <h2><?php echo t('social choice and social ranking'); ?></h2>
+<table>
+<thead>
+  <tr>	
+    <th><?php echo t('Social choice and social ranking'); ?></th>
+    <th><?php echo t('Options'); ?></th>
+    <th><?php echo t('Points Received'); ?></th>    
+    <th><?php echo t('Consensus Coefficient'); ?></th>    
+  </tr>
+</thead>
+<tbody>    
+    <?php $index = 1;
+    foreach($options as $option_id => $option) { ?>
+    <tr>
+       <td><?php echo $index; ?></td>
+       <td><?php echo $option; ?></td>
+       <td><?php echo array_sum($each_preference_no_times_voted[$option_id]); ?></td>
+    </tr>		
+    <?php $index++; 
+    } ?>
+</tbody>      
+</table>
