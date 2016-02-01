@@ -101,14 +101,34 @@
   </tr>
 </thead>
 <tbody>    
-    <?php $index = 1;
-    foreach($options as $option_id => $option) { ?>
+    <?php
+    $included_options[] = array();
+    $total_points = 0;
+    for ($i = 0; $i < count($total_points_each_option); $i++) { ?>
     <tr>
-       <td><?php echo $index; ?></td>
-       <td><?php echo $option; ?></td>
-       <td><?php echo array_sum($each_preference_no_times_voted[$option_id]); ?></td>
-    </tr>		
-    <?php $index++; 
-    } ?>
+       <td><?php echo $i+1; ?></td>
+       <td><?php 
+         if (isset($total_points_each_option[$i+1]) && $total_points_each_option[$i]['total'] == $total_points_each_option[$i+1]['total']) {
+		   $option = $options[$total_points_each_option[$i]['option_id']] . ' and ' . $options[$total_points_each_option[$i+1]['option_id']];        	 
+		   //$included_options[$i] = $options[$total_points_each_option[$i]['option_id']];
+		   //$included_options[$i+1] = $options[$total_points_each_option[$i+1]['option_id']];
+	     } else {
+		   $option = $options[$total_points_each_option[$i]['option_id']];
+		   //$included_options[$i] = $options[$total_points_each_option[$i+1]['option_id']];	 
+		 }		 
+         if (!in_array($options[$total_points_each_option[$i]['option_id']], $included_options)) {		 	 
+           echo $option; 
+	     } else {
+		   echo '-';	 
+		 }
+         ?></td>
+       <td><?php echo $total_points_each_option[$i]['total']; ?></td>
+       <td><?php $coefficient = round($total_points_each_option[$i]['total']/(count($options)*count($votes)), 2); 
+         echo $coefficient;
+       ?></td>
+       <?php $total_points += $total_points_each_option[$i]['total']; ?>
+    </tr>    		
+    <?php } ?>
+    <tr><td colspan="2"><?php echo t('Total'); ?></td><td><?php echo $total_points; ?></td><td></td></tr>
 </tbody>      
 </table>

@@ -5,58 +5,32 @@
  * @return array
  * A render array set for theming by theme_table().
  */
-function cb_options_vote_results_page() {
-  // We are going to output the results in a table with a nice header.
-  $header = array(
-    // The header gives the table the information it needs in order to make
-    // the query calls for ordering. TableSort uses the field information
-    // to know what database column to sort by.
-    array('data' => t('Question'), 'field' => 'q.question'),
-    array('data' => t('Description')),
-    array('data' => t('Created'), 'field' => 'q.created'),
-    array('data' => t('Updated'), 'field' => 'q.changed'),
-    array('data' => t('Actions')),
-  );
-
-  // Using the TableSort Extender is what tells the the query object that we
-  // are sorting.
-  $query = db_select('cb_questions', 'q')
-    ->extend('PagerDefault')
-    ->extend('TableSort');
-  $query->fields('q');
-
-  // Don't forget to tell the query object how to find the header information.
-  $result = $query
-    ->limit(20)
-    ->orderByHeader($header)
-    ->execute();
-
-  $rows = array();
-  foreach ($result as $row) {
-    $content = array(      
-      'question' => $row->question,
-      'description' => $row->description,
-      'created' => date('d/m/Y h:m:s', $row->created),
-      'changed' => date('d/m/Y h:m:s', $row->changed),
-      'actions' => l(t('Vote') , 'vote/' . $row->id,
-        array('query' => drupal_get_destination())),
-    );
-    // Normally we would add some nice formatting to our rows
-    // but for our purpose we are simply going to add our row
-    // to the array.
-    $rows[] = array('data' => $content);
+function cb_options_vote_results_page($question_id) {
+  $question = cb_get_question_info($question_id);
+  //dsm($question);
+  $options = cb_get_options($question_id);
+  //dsm($options);
+  $votes = cb_get_votes($question_id);
+  
+  $vote_approvals = array();
+  foreach ($votes['no_times_each_preference_to_each_option'] as $option_id => $total_votes) {    
+    $count = 0;
+    foreach ($total_votes as $vote) {
+	  $count += count($vote);	
+	}
+	$vote_approvals[$option_id] = $count;	  
   }
-
-  // Build the table for the nice output.
-  $build['tablesort_table'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-    '#empty' => t('There is no data exists in db'),
+  
+  //dsm($votes);
+  $data = array(
+    'question' => $question,
+    'options' => $options,
+    'votes' => $votes['votes'],
+    'no_times_each_preference_to_each_option' => $votes['no_times_each_preference_to_each_option'],
+    'each_preference_no_times_voted' => $votes['each_preference_no_times_voted'],
+    'total_points_each_option' => $votes['total_points_each_option'], 
+    'vote_approvals' => $vote_approvals,
   );
-
-  // Attach the pager theme.
-  $build['pager_pager'] = array('#theme' => 'pager');
-
-  return $build;
+  
+  return theme('cb_results_page', $data);
 }

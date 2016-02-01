@@ -226,10 +226,32 @@ function cb_get_votes($question_id = NULL) {
   
   $total_points_each_option = array();
   foreach($social_ranking as $ranking) {
-	  foreach($ranking as $option_id => $point) {
-		  $total_points_each_option[$option_id][] = $point;
-      }	  
+	foreach($ranking as $option_id => $point) {
+	  $total_points_each_option[$option_id][] = $point;
+    }	  
+  }
+  
+  $total_points_each_option_final = array();
+  foreach($total_points_each_option as $option_id => $total) {
+	$total_points_each_option_final[$option_id] = array_sum($total);	
   }  
+  
+  arsort($total_points_each_option_final);
+  
+  $rankings = array();  
+  foreach($total_points_each_option_final as $option_id => $total) {
+	if (arg(0) == 'vote-audit') {  
+	  //This is for showing high rank option first in audit page 	
+      $rankings[] = array(
+        'option_id' => $option_id, 
+        'total' => $total,
+      );
+    } 
+    else {
+	  $rankings[$option_id] = $total;	
+	}	  
+  }
+    
   // Collect how many times each preference given to each option
   $no_times_each_preference_to_each_option = array();
   $each_preference_no_times_voted = array();
@@ -244,7 +266,7 @@ function cb_get_votes($question_id = NULL) {
     'votes' => $votes,
     'no_times_each_preference_to_each_option' => $no_times_each_preference_to_each_option,
     'each_preference_no_times_voted'=> $each_preference_no_times_voted,
-    'each_preference_no_times_voted' => $total_points_each_option,     
+    'total_points_each_option' => $rankings,     
   );  
   
   return $data;
@@ -263,10 +285,24 @@ function civiq_ballots_theme($existing, $type, $theme, $path) {
       'votes' => NULL,
       'no_times_each_preference_to_each_option' => NULL,
       'each_preference_no_times_voted' => Null,
+      'total_points_each_option' => NULL,
     ),
     'template' => 'templates/cb-votes'
   );
  
+  $items['cb_results_page'] = array(
+    'variables' => array(
+      'question' => NULL, 
+      'options' => NULL, 
+      'votes' => NULL,
+      'no_times_each_preference_to_each_option' => NULL,
+      'each_preference_no_times_voted' => Null,
+      'total_points_each_option' => NULL,
+      'vote_approvals' => NULL,
+    ),
+    'template' => 'templates/cb-results'
+  );
+  
   return $items;
 }
 
@@ -323,67 +359,6 @@ function get_total_points_for_each_vote($option_votes, $question_id) {
   
   $total_points_raised = array_sum($points_raised);
   $points_unused = array_sum($points_total) - $total_points_raised;  
-  return array(  
-    'points_raised' => $points_raised,
-    'total_points_raised' => $total_points_raised,
-    'points_unused' => $points_unused 
-  );
-}
-
-
-/**
- * Function to get voters profile
- */
-function get_voters_profile($question_id) {  
-  // Options of the question
-  $options = cb_get_options($question_id);
-  $total_options = count($options);
-  $options_voted = count($option_votes);
-  $diff = 0;
-  $points_first_preference = 0;
-  // If all options voted
-  if ($options_voted == $total_options) {
-    $points_first_preference = $total_options;    
-  } else {
-    $diff = $total_options - $options_voted;
-  }
-
-  // If total votes less than total options  
-  if ($diff > 0) {
-    $points_first_preference = $total_options - $diff;
-  }
-  
-  $points_raised = array();
-  foreach($option_votes as $option_id => $vote_preference) {
-     if ($vote_preference == 1) {
-      $points_raised[$option_id] = $points_first_preference;
-    } else {    
-      /** 
-       * Points based on preference
-       * 1st = $points_first_preference;
-       * 2nd = 1st - 1;
-       * 3rd = 1st - 2;
-       * 4th = 1st - 3;
-       */
-      $points_raised[$option_id] = $points_first_preference - ($vote_preference - 1);
-    }
-  }
-  
-  $points_first_preference_all_voted = $total_options;
-  $points_total = array();
-  $key = 0;
-  foreach($options as $option) {
-    if ($key == 0) {
-      $points_total[$key] = $points_first_preference_all_voted;
-    } else {
-      $points_total[$key] = $points_first_preference_all_voted - $key;   
-    }    
-    $key++;
-  }
-  
-  $total_points_raised = array_sum($points_raised);
-  $points_unused = array_sum($points_total) - $total_points_raised;  
-  
   return array(  
     'points_raised' => $points_raised,
     'total_points_raised' => $total_points_raised,
