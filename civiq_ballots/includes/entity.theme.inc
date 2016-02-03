@@ -1,12 +1,6 @@
 <?php
 /**
  * @file
- * Census record theme implementation.
+ * Decisionmaker theme implementation.
  */
 
-/**
- * Theme census record full page.
- */
-function theme_census_full($variables) {
-  return $variables['data'];
-}

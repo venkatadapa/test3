@@ -6,12 +6,9 @@
  * A render array set for theming by theme_table().
  */
 function cb_options_vote_audit_page($question_id) {
-  $question = cb_get_question_info($question_id);
-  //dsm($question);
-  $options = cb_get_options($question_id);
-  //dsm($options);
-  $votes = cb_get_votes($question_id);
-  //dsm($votes);
+  $question = cb_get_question_info($question_id);  
+  $options = cb_get_options($question_id);  
+  $votes = cb_get_votes($question_id);  
   $data = array(
     'question' => $question,
     'options' => $options,
@@ -20,6 +17,10 @@ function cb_options_vote_audit_page($question_id) {
     'each_preference_no_times_voted' => $votes['each_preference_no_times_voted'], 
     'total_points_each_option' => $votes['total_points_each_option'],
   );
+  if (count($votes['votes']) > 0) {
+    return theme('cb_audit_page', $data);
+  }
   
-  return theme('cb_audit_page', $data);
+  $output = t('No votes found') . ' ' . l('Click here to vote and be the first person', 'vote/' . arg(1));
+  return $output;
 }
