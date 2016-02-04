@@ -5,7 +5,12 @@
  */
 function cb_options_vote_form($form, &$form_state, $question_id) {
   $form = array(); 
-  $question = cb_get_question_info($question_id);    
+  $question = cb_get_question_info($question_id);
+  if (empty($question)) {
+	drupal_set_title('');  
+	drupal_set_message(t('Invalid url'), 'error');  
+	return '';
+  }    
   $form['question'] = array(    
     '#markup' => '<div class="row"><div class="col-md-12">'.
       $question['question'].'</div></div>',

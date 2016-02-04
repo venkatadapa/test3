@@ -7,9 +7,12 @@
  */
 function cb_options_vote_results_page($question_id) {
   $question = cb_get_question_info($question_id);
-  //dsm($question);
-  $options = cb_get_options($question_id);
-  //dsm($options);
+  if (empty($question)) {
+	drupal_set_title('');  
+	drupal_set_message(t('Invalid url'), 'error');  
+	return '';
+  }
+  $options = cb_get_options($question_id);  
   $votes = cb_get_votes($question_id);
   
   $vote_approvals = array();
@@ -19,9 +22,8 @@ function cb_options_vote_results_page($question_id) {
 	  $count += count($vote);	
 	}
 	$vote_approvals[$option_id] = $count;	  
-  }
+  }  
   
-  //dsm($votes);
   $data = array(
     'question' => $question,
     'options' => $options,
@@ -32,5 +34,10 @@ function cb_options_vote_results_page($question_id) {
     'vote_approvals' => $vote_approvals,
   );
   
-  return theme('cb_results_page', $data);
+  if (count($votes['votes']) > 0) {
+    return theme('cb_results_page', $data);
+  }
+  
+  $output = t('No votes found') . ' ' . l('Click here to vote and be the first person', 'vote/' . arg(1));
+  return $output;
 }

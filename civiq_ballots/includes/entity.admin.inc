@@ -109,7 +109,7 @@ function cb_questions_form_validate($form, &$form_state) {
  * Implements hook_form_submit().
  */
 function cb_questions_form_submit($form, &$form_state) {
-  // Add author id as from logged in user.
+  // Add author id as logged in user.
   global $user;
   $form_state['values']['uid'] = $user->uid;
   //$form_state['values']['status'] = 0;  
@@ -126,6 +126,9 @@ function cb_questions_form_submit($form, &$form_state) {
       )
     );
    foreach($form_state['values']['options'] as $value) {
+	 if (empty($value)) {
+	   continue;	 
+	 }     
 	  $query->values(array(
 	    'uid' => $user->uid,
 	    'cb_option' => $value,
@@ -146,17 +149,48 @@ function cb_questions_form_submit($form, &$form_state) {
     );
     foreach($form_state['values']['options'] as $key => $value) {
 	  if (array_key_exists('cb_id', $form['options'][$key]['#attributes'])) {
-		//Update existing option
+		// Update existing option
 		$option_id = $form['options'][$key]['#attributes']['cb_id'];
-		db_update('cb_options')
-		->fields(array(
-		  'cb_option' => $value,
-		  'changed' => REQUEST_TIME,
-		))
-		->condition('id', $option_id, '=')
-		->execute();		
+		if (!empty($value)) {
+		  db_update('cb_options')
+		  ->fields(array(
+		    'cb_option' => $value,
+		    'changed' => REQUEST_TIME,
+		  ))
+		  ->condition('id', $option_id, '=')
+		  ->execute();
+	    } 
+	    else {
+		  // If value empty, remove it		  
+		  // First remove the option votes from cb_votes table  
+		  $votes = db_select('cb_votes', 'v')
+		    ->fields('v', array('id', 'votes'))
+		    ->condition('cb_question_id', $question_id)
+		    ->execute();
+		  foreach ($votes as $row) {
+			$votes_array = drupal_json_decode($row->votes);
+			unset($votes_array[$option_id]);
+			$votes_updated = drupal_json_encode($votes_array);
+		    db_update('cb_votes')
+		      ->fields(array(
+		        'votes' => $votes_updated 
+		      ))
+		      ->condition('id', $row->id)
+		      ->execute(); 	  
+		  }
+		  
+		  // Delete option from options table	
+		  db_delete('cb_options')
+		  ->condition('id', $option_id)
+          ->execute();	
+		} 		
 	    continue;
-	  }	  
+	  }
+	  // If value empty, don't insert the option
+	  if (empty($value)) {
+	    continue;	 
+	  } 
+	  	  
 	  $insert->values(array(
 	    'uid' => $user->uid,
 	    'cb_option' => $value,
@@ -171,8 +205,9 @@ function cb_questions_form_submit($form, &$form_state) {
   $form_state['redirect'] = CB_QUESTIONS_ADMIN_PATH;
 }
 
-
-
+/**
+ * Function to add more options
+ * */
 function civiq_ballots_ajax_add_more_options($form, $form_state) {
   return $form['options'];
 }

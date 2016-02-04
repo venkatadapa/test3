@@ -8,8 +8,9 @@
 
 <!--How many users cast votes and what is the preference for each option-->
 <h2><?php echo t('Results'); ?></h2>
-<h3><?php echo t('Total number of votes for this ballot is '); ?></h3>
-<table>
+<h3><?php echo t('Total number of votes for this ballot is '). count($votes); ?></h3>
+<div class="row">
+<table class="table-responsive table table-bordered table-hover">
 <thead>
   <tr>	
     <th><?php echo t('Options'); ?></th>
@@ -44,3 +45,4 @@
   <?php } ?>
 </tbody>	
 </table>
+</div>

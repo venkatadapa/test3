@@ -55,6 +55,7 @@ function cb_questions_page() {
     '#header' => $header,
     '#rows' => $rows,
     '#empty' => t('There is no data exists in db'),
+    '#attributes' => array('class' => array('table-responsive')),
   );
 
   // Attach the pager theme.

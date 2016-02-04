@@ -8,7 +8,8 @@
 
 <!--How many users cast votes and what is the preference for each option-->
 <h2><?php echo t('vote audit'); ?></h2>
-<table>
+<div>
+<table class="table table-responsive table-bordered table-hover">
 <thead>
   <tr>	
     <th rowspan="2"><?php echo t('Preferences'); ?></th>
@@ -21,16 +22,17 @@
 		<th> <?php echo $option; ?> </th>
     <?php } ?>
   </tr>
-</thead>	
+</thead>
+<tbody>	
 <?php $vote_key = 1;
   $total_points = 0;
-  $total_unused_points = 0; 
+  $total_unused_points = 0;  
   foreach($votes as $vote) { ?>
 	<tr>
 	  <td><?php echo $vote_key; ?></td>
-	  <?php for ($key=1; $key <= count($options); $key++) { ?>
-		<td> <?php if (isset($vote['votes'][$key])) {
-			         echo $vote['votes'][$key]; 
+	  <?php foreach ($options as $option_id => $option_value) { ?>
+		<td> <?php if (isset($vote['votes'][$option_id])) {
+			         echo $vote['votes'][$option_id]; 
 			       } else {
 			        echo '-'; 
 			       } ?> 
@@ -49,25 +51,29 @@
  <tr><td colspan="<?php echo count($options)+1;?>"><?php echo t('Total');?></td>
    <td><?php echo $total_points; ?></td>
    <td><?php echo $total_unused_points; ?></td>
-   </tr> 
+   </tr>
+</tbody>    
 </table>
+</div>
 
 
 <!--Each preference given how many times to each option-->
 <h2><?php echo t('voters profile'); ?></h2>
-<table>
+<div>
+<table class="table-responsive table table-bordered table-hover">
 <thead>
   <tr>	
     <th rowspan="2"><?php echo t('Preferences'); ?></th>
     <th colspan="<?php echo count($options); ?>"><?php echo t('Options'); ?></th>
     <th rowspan="2"><?php echo t('Totals'); ?></th>    
-  </tr>
+  </tr>  
   <tr>
     <?php foreach($options as $option) { ?>
 		<th> <?php echo $option; ?> </th>
     <?php } ?>
   </tr>
-</thead>	
+</thead>
+<tbody>
 <?php
  $preference = 1;
  foreach($options as $option_id => $option) { ?>
@@ -86,12 +92,15 @@
   <td><?php echo count($each_preference_no_times_voted[$preference]); ?></td>        
   </tr>	
 <?php $preference++; } ?>
+</tbody>	
 </table>
+</div>
 
 
 <!--Ranking based on preferences choosen-->
 <h2><?php echo t('social choice and social ranking'); ?></h2>
-<table>
+<div>
+<table class="table-responsive table table-bordered table-hover">
 <thead>
   <tr>	
     <th><?php echo t('Social choice and social ranking'); ?></th>
@@ -132,3 +141,4 @@
     <tr><td colspan="2"><?php echo t('Total'); ?></td><td><?php echo $total_points; ?></td><td></td></tr>
 </tbody>      
 </table>
+</div>

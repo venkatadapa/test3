@@ -171,13 +171,16 @@ function civiq_ballots_menu() {
  * Helper function for getting question info   
  */
 function cb_get_question_info($id) {
-  $question = db_select('cb_questions', 'q')
-    ->fields('q', array('question', 'description'))
-    ->condition('id', $id, '=')
-    ->execute()
-    ->fetchAssoc();
-    
-  return $question;
+  try {	
+    $question = db_select('cb_questions', 'q')
+      ->fields('q', array('question', 'description'))
+      ->condition('id', $id, '=')
+      ->execute()
+      ->fetchAssoc();
+      return $question;
+  } catch (Exception $e) {
+	return '';   
+  }   
 }
 
 /**
