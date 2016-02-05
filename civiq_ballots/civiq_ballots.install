@@ -53,6 +53,12 @@ function civiq_ballots_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'enable_voting' => array(
+        'description' => 'The voting status',
+        'type' => 'int',        
+        'not null' => TRUE,
+        'default' => 1,
+      ),
       'status' => array(
         'description' => 'The status of the entity',
         'type' => 'int',        

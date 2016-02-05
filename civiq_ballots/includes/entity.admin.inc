@@ -86,6 +86,8 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       );      
     }
   }
+  
+  // Adding options to collect for this question ends here
   $form['options']['add_option'] = array(
     '#type' => 'button',
     '#value' => t('Add an option'),
@@ -94,11 +96,9 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       'callback' => 'civiq_ballots_ajax_add_more_options',
       'wrapper' => 'options-container',
      ),
-  );
-  // Adding options to collect for this question ends here
+  );  
 
-  // Remove last option and show only if more than 2 options
-  dsm($form_state['storage']['options']);
+  // Remove last option and show only if more than 2 options  
   if ($form_state['storage']['options'] > 2) {
     $form['options']['remove_option'] = array(
       '#type' => 'button',
@@ -149,8 +149,8 @@ function cb_questions_form_submit($form, &$form_state) {
         'created'       
       )
     );
-   foreach($form_state['values']['options'] as $value) {
-	 if (empty($value)) {
+   foreach($form_state['values']['options'] as $key => $value) {	   
+	 if (empty($value) || !is_numeric($key)) {
 	   continue;	 
 	 }     
 	  $query->values(array(
@@ -172,6 +172,11 @@ function cb_questions_form_submit($form, &$form_state) {
       )
     );
     foreach($form_state['values']['options'] as $key => $value) {
+	  if (!is_numeric($key)) {
+		continue;  
+	  }	
+	
+	  // Update the existing options	
 	  if (array_key_exists('cb_id', $form['options'][$key]['#attributes'])) {
 		// Update existing option
 		$option_id = $form['options'][$key]['#attributes']['cb_id'];
@@ -209,8 +214,9 @@ function cb_questions_form_submit($form, &$form_state) {
           ->execute();	
 		} 		
 	    continue;
-	  }
-	  // If value empty, don't insert the option
+	  } //If for existing optionns ends here.
+	  
+	  // For new options, If value empty, don't insert the option
 	  if (empty($value)) {
 	    continue;	 
 	  } 
