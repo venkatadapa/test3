@@ -89,7 +89,14 @@
         ?>
       </td>      
     <?php } ?>
-  <td><?php echo count($each_preference_no_times_voted[$preference]); ?></td>        
+  <td><?php 
+    if (isset($each_preference_no_times_voted[$preference])) { 
+      echo count($each_preference_no_times_voted[$preference]);
+    } else {
+	  echo '0';	
+    }   
+    ?>
+    </td>        
   </tr>	
 <?php $preference++; } ?>
 </tbody>	
