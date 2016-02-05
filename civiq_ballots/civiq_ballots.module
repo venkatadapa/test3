@@ -76,7 +76,7 @@ function civiq_ballots_entity_info() {
     'access callback' => 'access_cb_votes',
     'uri callback' => 'entity_class_uri',
     'admin ui' => array(
-      'path' => CB_VOTES_ADMIN_PATH,
+      //'path' => CB_VOTES_ADMIN_PATH,
       'controller class' => 'CbVotesEntityDefaultUIController',
       'file' => 'includes/entity.admin.inc',
     ),    

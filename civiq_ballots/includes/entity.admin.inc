@@ -43,8 +43,19 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
          'cb_option' => $record['cb_option'],
       );
     }    
-  }  
-  $default_options = 3;
+  }
+  
+  // Add and remove options
+  if (isset($form_state['clicked_button'])) { 
+	if ($form_state['clicked_button']['#value'] == t('Remove last option')) {
+      $form_state['storage']['options']--;      
+    } else if ($form_state['clicked_button']['#value'] == t('Add an option')) {
+	  $form_state['storage']['options']++;  	  
+    }
+  }
+  
+  
+  $default_options = 2;
   if (count($existing_options) > 1) {
     $default_options = count($existing_options);
   }
@@ -69,12 +80,13 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       $form['options'][$i] = array(
         '#title' => t('Option') . ' ' . $index,
         '#type' => 'textfield',
+        '#required' => ($form_state['storage']['options'] > 2) ? FALSE : TRUE,
         '#default_value' => $default_value,
         '#attributes' => $attributes,
       );      
     }
   }
-  $form['add_option'] = array(
+  $form['options']['add_option'] = array(
     '#type' => 'button',
     '#value' => t('Add an option'),
     '#href' => '',
@@ -83,8 +95,21 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       'wrapper' => 'options-container',
      ),
   );
- // Adding options to collect for this question ends here
+  // Adding options to collect for this question ends here
 
+  // Remove last option and show only if more than 2 options
+  dsm($form_state['storage']['options']);
+  if ($form_state['storage']['options'] > 2) {
+    $form['options']['remove_option'] = array(
+      '#type' => 'button',
+      '#value' => t('Remove last option'),
+      '#href' => '',
+      '#ajax' => array(
+        'callback' => 'civiq_ballots_ajax_remove_more_options',
+        'wrapper' => 'options-container',
+      ),
+    );
+  }
   $form['actions'] = array(
     '#type' => 'actions',
     'submit' => array(
@@ -92,8 +117,7 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
       '#value' => isset($entity->id) ? t('Update') : t('Save'),
     ),
   );
-
-  $form_state['storage']['options']++;
+  
   return $form;
 }
 
@@ -211,6 +235,14 @@ function cb_questions_form_submit($form, &$form_state) {
 function civiq_ballots_ajax_add_more_options($form, $form_state) {
   return $form['options'];
 }
+
+/**
+ * Function to remove last option
+ * */
+function civiq_ballots_ajax_remove_more_options($form, $form_state) {
+  return $form['options'];
+}
+
 
 /*=====================Options Related Code=============================*/
 

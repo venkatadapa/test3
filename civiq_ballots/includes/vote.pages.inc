@@ -19,7 +19,7 @@ function cb_options_vote_form($form, &$form_state, $question_id) {
     '#markup' => '<div class="row"><div class="col-md-12">'.
       $question['description'].'</div></div>',
   ); 
-  $vote_preferences = array('' => t('Select'));
+  $vote_preferences = array('' => t('Select Preference'));
   $options = array();
   $options_query = db_select('cb_options', 'o')
     ->fields('o', array('id', 'cb_option'))

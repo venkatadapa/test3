@@ -7,6 +7,8 @@
  */
 function cb_options_vote_audit_page($question_id) {
   $question = cb_get_question_info($question_id);
+  
+  // If user enters invalid question id  manullay through error.
   if (empty($question)) {
 	drupal_set_title('');  
 	drupal_set_message(t('Invalid url'), 'error');  
