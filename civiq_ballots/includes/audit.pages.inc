@@ -6,6 +6,7 @@
  * A render array set for theming by theme_table().
  */
 function cb_options_vote_audit_page($question_id) {
+  drupal_add_css(drupal_get_path('module', 'civiq_ballots') . '/css/responsive_tables.css');	
   $question = cb_get_question_info($question_id);
   
   // If user enters invalid question id  manullay through error.

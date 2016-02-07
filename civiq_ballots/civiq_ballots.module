@@ -36,10 +36,7 @@ function civiq_ballots_entity_info() {
       'controller class' => 'CbQuestionsEntityDefaultUIController',
       'file' => 'includes/entity.admin.inc',     
     ),
-    'fieldable' => TRUE,    
-    /*'inline entity form' => array(
-        'controller' => 'ProjectInlineEntityFormController',
-    ),*/
+    'fieldable' => TRUE,        
     'views controller class' => 'EntityDefaultViewsController',
     'module' => 'civiq_ballots',
   );
@@ -57,7 +54,7 @@ function civiq_ballots_entity_info() {
     'uri callback' => 'entity_class_uri',
     'admin ui' => array(
       'path' => CB_OPTIONS_ADMIN_PATH,
-      'controller class' => 'CbQuestionsEntityDefaultUIController',
+      'controller class' => 'CbOptionsEntityDefaultUIController',
       'file' => 'includes/entity.admin.inc',
     ),        
     'views controller class' => 'EntityDefaultViewsController',

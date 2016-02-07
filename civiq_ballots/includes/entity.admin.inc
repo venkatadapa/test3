@@ -28,6 +28,14 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
     '#description' => t('Description'),
     '#required' => TRUE,    
   );
+  $form['enable_voting'] = array(
+    '#title' => t('Voting Status'),
+    '#type' => 'radios',
+    '#options' => array('1' => t('Open'), '0' => t('Closed')),
+    '#default_value' => isset($entity->enable_voting) ? $entity->enable_voting : '',
+    '#description' => t('If it is closed, users cannot vote'),
+    '#required' => TRUE,    
+  );
   field_attach_form('cb_questions', $entity, $form, $form_state);
   
   // Adding options to collect for this question start here
