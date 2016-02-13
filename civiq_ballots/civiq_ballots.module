@@ -53,7 +53,7 @@ function civiq_ballots_entity_info() {
     'access callback' => 'access_cb_options',
     'uri callback' => 'entity_class_uri',
     'admin ui' => array(
-      'path' => CB_OPTIONS_ADMIN_PATH,
+      //'path' => CB_OPTIONS_ADMIN_PATH,
       'controller class' => 'CbOptionsEntityDefaultUIController',
       'file' => 'includes/entity.admin.inc',
     ),        
@@ -85,7 +85,7 @@ function civiq_ballots_entity_info() {
 }
 
 /**
- * Access call back for questions
+ * Access callback for questions
  */
 function access_cb_questions() {
   global $user;
@@ -97,7 +97,7 @@ function access_cb_questions() {
 }
 
 /**
- * Access call back for options
+ * Access callback for options
  */
 function access_cb_options() {
   global $user;
@@ -109,7 +109,7 @@ function access_cb_options() {
 }
 
 /**
- * Access call back for votes
+ * Access callback for votes
  */
 function access_cb_votes() {
   global $user;
@@ -170,7 +170,7 @@ function civiq_ballots_menu() {
 function cb_get_question_info($id) {
   try {	
     $question = db_select('cb_questions', 'q')
-      ->fields('q', array('question', 'description'))
+      ->fields('q', array('question', 'description', 'enable_voting'))
       ->condition('id', $id, '=')
       ->execute()
       ->fetchAssoc();
@@ -272,6 +272,29 @@ function cb_get_votes($question_id = NULL) {
   return $data;
 }
 
+
+/**
+ * Helper function for getting user vote status on ballot
+ */
+function cb_is_user_voted($question_id, $user_id) {  	  
+  try {	
+    $query = db_select('cb_votes', 'v')
+    ->fields('v', array('id'));
+	  if ($question_id !== NULL) {
+		$query->condition('cb_question_id', $question_id, '=');
+		$query->condition('uid', $user_id, '=');
+	  }     
+	  $result = $query->execute();
+	  if ($result->rowCount() > 0) {
+	    return TRUE;	  
+	  }
+  } catch (Exception $e) {
+	return FALSE;   
+  }
+  
+  return FALSE;   
+}
+
 /**
  * Implements hook_theme().
  */
@@ -365,3 +388,20 @@ function get_total_points_for_each_vote($option_votes, $question_id) {
     'points_unused' => $points_unused 
   );
 }
+
+/**
+ * Add ordinal suffix to the numbers  
+ */
+function cb_ordinal_suffix($num) {
+  if (!in_array(($num % 100),array(11,12,13))){
+    switch ($num % 10) {
+	  // Handle 1st, 2nd, 3rd
+	  case 1:  return $num.'st';
+	  case 2:  return $num.'nd';
+	  case 3:  return $num.'rd';
+    }
+  }
+  
+  return $num.'th';
+}
+

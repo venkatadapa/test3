@@ -32,7 +32,7 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
     '#title' => t('Voting Status'),
     '#type' => 'radios',
     '#options' => array('1' => t('Open'), '0' => t('Closed')),
-    '#default_value' => isset($entity->enable_voting) ? $entity->enable_voting : '',
+    '#default_value' => isset($entity->enable_voting) ? $entity->enable_voting : 1,
     '#description' => t('If it is closed, users cannot vote'),
     '#required' => TRUE,    
   );
@@ -61,8 +61,7 @@ function cb_questions_form($form, &$form_state, $entity = NULL) {
 	  $form_state['storage']['options']++;  	  
     }
   }
-  
-  
+    
   $default_options = 2;
   if (count($existing_options) > 1) {
     $default_options = count($existing_options);

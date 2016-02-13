@@ -20,13 +20,11 @@ function cb_questions_page() {
       'data' => t('Description')),
     'created' => array(
       'data' => t('Created'),
-      'class' => 'numeric', 
-      'field' => 'q.created',
+      'class' => 'numeric',       
     ),
     'updated' => array(
       'data' => t('Updated'), 
-      'class' => 'numeric',
-      'field' => 'q.changed',
+      'class' => 'numeric',      
     ),
     'actions' => array('data' => t('Actions')),
   );
@@ -40,7 +38,7 @@ function cb_questions_page() {
 
   // Don't forget to tell the query object how to find the header information.
   $result = $query
-    ->limit(20)
+    ->limit(10)
     ->orderByHeader($header)
     ->execute();
 

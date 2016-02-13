@@ -1,15 +1,8 @@
-<div class="row">
-  <div class="col-md-12"><?php echo $question['question']; ?></div>
-</div>
-
-<div class="row">
-  <div class="col-md-12"><?php echo $question['description']; ?></div>
-</div>
-
+<p class="well"><?php echo $question['question']; ?></p>
+<p class="well"><?php echo $question['description']; ?></p>
 <!--How many users cast votes and what is the preference for each option-->
 <h2><?php echo t('Results'); ?></h2>
 <h3><?php echo t('Total number of votes for this ballot is '). count($votes); ?></h3>
-<div class="row">
 <table class="table-responsive table table-bordered table-hover">
 <thead>
   <tr>	
@@ -41,4 +34,6 @@
   <?php } ?>
 </tbody>	
 </table>
-</div>
+<div class='row-fluid'><span class='pull-right'>
+<?php echo l(t('Show all ballots'), 'questions'); ?>
+</span></div>

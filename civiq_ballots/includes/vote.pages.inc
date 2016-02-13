@@ -6,18 +6,31 @@
 function cb_options_vote_form($form, &$form_state, $question_id) {
   $form = array(); 
   $question = cb_get_question_info($question_id);
+  if (!$question['enable_voting']) {
+	drupal_set_title('');  
+	drupal_set_message(t('Voting Closed for this question'), 'error');  
+	return ''; 
+  }
   if (empty($question)) {
 	drupal_set_title('');  
 	drupal_set_message(t('Invalid url'), 'error');  
 	return '';
-  }    
+  }
+  global $user;
+  $is_voted = cb_is_user_voted($question_id, $user->uid);  
+  if ($is_voted) {
+	drupal_set_title('');  
+	drupal_set_message(t('You have already voted on this ballot'), 'warning');  
+	return '';  
+  }
+      
   $form['question'] = array(    
-    '#markup' => '<div class="row"><div class="col-md-12">'.
-      $question['question'].'</div></div>',
+    '#markup' => '<p class="well">'.
+      $question['question'].'</p>',
   );
   $form['description'] = array(    
-    '#markup' => '<div class="row"><div class="col-md-12">'.
-      $question['description'].'</div></div>',
+    '#markup' => '<p class="well">'.
+      $question['description'].'</p>',
   ); 
   $vote_preferences = array('' => t('Select Preference'));
   $options = array();
@@ -49,8 +62,11 @@ function cb_options_vote_form($form, &$form_state, $question_id) {
   $form['actions'] = array(
     '#type' => 'submit',
     '#value' => t('Vote')
+  );  
+  $form['back_link'] = array(
+    '#markup' => "<div class='row-fluid'><span class='pull-right'>".l(t('Show all ballots'), 'questions')."</span></div>",
+    '#weight' => 30, 
   );
-  
   return $form;     
 } 
 
@@ -71,8 +87,8 @@ function cb_options_vote_form_validate($form, &$form_state) {
     $invalid_sequence = TRUE;	  
   }
   
-  for($i=0; $i < count($casted_votes); $i++) {
-	  //dsm($casted_votes);
+  $casted_votes_count = count($casted_votes);
+  for($i=0; $i < $casted_votes_count; $i++) {	  
 	if (isset($casted_votes[$i+1])) {  
       if (($casted_votes[$i+1] - $casted_votes[$i]) > 1) {
 	    $invalid_sequence = TRUE;
@@ -84,16 +100,16 @@ function cb_options_vote_form_validate($form, &$form_state) {
   }
   
   // Show error if same preference given for multiple options
-  if(count(array_unique($casted_votes)) < count($casted_votes)) {
+  if(count(array_unique($casted_votes)) < $casted_votes_count) {
     form_set_error('options', t('Invalid voting found, Please remove duplicates'));
   }
   
-  if (count($casted_votes) == 0) {
+  if ($casted_votes_count == 0) {
     form_set_error('optios', t('Please cast votes before submit')); 
   }
 }
 
-function cb_options_vote_form_submit($form, $form_state) {
+function cb_options_vote_form_submit($form, &$form_state) {
   global $user;
   $option_preferences = $form_state['values']['options'];
   $casted_votes = array();
@@ -103,7 +119,8 @@ function cb_options_vote_form_submit($form, $form_state) {
       $casted_votes[$key] = $preference;      
     }
   }
-  if (count($casted_votes) > 0) {  
+  $casted_votes_count = count($casted_votes);
+  if ($casted_votes_count > 0) {  
 	  $votes = drupal_json_encode($casted_votes);
 	  db_insert('cb_votes')
 		->fields(array(
